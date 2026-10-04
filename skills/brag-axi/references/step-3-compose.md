@@ -70,7 +70,7 @@ Scene summary:
 - Audio files: copy the chosen music and any Hyperframes-selected SFX into `<output-dir>/composition/assets/`
 
 ## Hyperframes Instructions
-Load the composition-building Hyperframes domain skills — `hyperframes-core` (composition contract + `data-*` timing), `hyperframes-animation` (motion), `hyperframes-creative` (design spec, beats, audio-reactive), `hyperframes-keyframes` (seek-safe keyframes), and `hyperframes-cli` (lint/check/render). /brag is its own workflow: do not enter the `hyperframes` entry-point intent interview and do not route into its generic promo / launch-video workflow. Prefer native Hyperframes conventions over anything in `/brag`.
+Load the composition-building Hyperframes domain skills `hyperframes-core` (composition contract + `data-*` timing), `hyperframes-animation` (motion), and `hyperframes-creative` (design spec, beats, audio-reactive). Load `hyperframes-keyframes` only when the storyboard has a punch-in, zoom, reframe, Ken Burns move, camera move, match or whip handoff, path, mask, SVG morph or draw, text trail, or 3D depth. Load `hyperframes-cli` only for `--voice` (TTS), `hyperframes beats`, or a check or render failure that `brag.mjs` output does not explain. /brag is its own workflow: do not enter the `hyperframes` entry-point intent interview and do not route into its generic promo / launch-video workflow. Prefer native Hyperframes conventions over anything in `/brag`.
 
 Requirements:
 - Show at least one real UI, copy, or visual element from the source project.
@@ -84,7 +84,7 @@ Requirements:
 - Honor planned music treatment such as fade-outs, ducking, beat-aligned reveals, or letting a final SFX ring over the music, using the best Hyperframes-supported implementation.
 - When music is present and the treatment is not `none`, consider Hyperframes audio-reactive workflow: extract audio data and use RMS/frequency bands for subtle, brand-specific motion. Good targets are glow, depth, background warmth, card presence, title emphasis, or other existing visual elements. Avoid waveform/equalizer visuals, musical-note graphics, generic particle systems, strobing, or heavy pulsing.
 - Use local assets for audio and any required runtime/media dependencies when possible.
-- Run `hyperframes check` before render — it is brag's single gate.
+- Run the check gate before render: `node <skill-dir>/scripts/brag.mjs check <output-dir>/composition`. It is brag's single gate.
 - Keep creation and rendering local. Remote or publishing workflows require a separate explicit user request.
 ```
 
@@ -94,7 +94,7 @@ The brief is the boundary: if a detail belongs to product positioning, copy, ton
 
 ## Audio asset preparation
 
-Read [audio.md](audio.md). Copy the planned music into `<output-dir>/composition/assets/music/` before building the composition.
+If music or SFX is on, read [audio.md](audio.md) (shared asset paths and copy rules), then only the layers you use: [audio-music.md](audio-music.md) for music, beat sync, and audio-reactive visuals; [audio-sfx.md](audio-sfx.md) for sound effects. With `--no-music` and `--no-sfx`, skip all three. Copy the planned music into `<output-dir>/composition/assets/music/` before building the composition.
 
 ```bash
 mkdir -p <output-dir>/composition/assets/music
@@ -152,7 +152,7 @@ If extraction is unavailable (no helper, or ffmpeg missing), note it in the brie
 
 ## Beat sync (when a cue source is available)
 
-Get a cue source first (see `audio.md` → "Beat and cue sources"): a bundled preset, `analyze_music_cues.py` on any track (needs Python; run via `uv`), or `npx hyperframes beats` (no Python; needs Hyperframes ≥ 0.6.99). The rich sources (preset / `analyze_music_cues.py`) give two arrays; `hyperframes beats` gives one.
+Get a cue source first (see `audio-music.md` → "Beat and cue sources"): a bundled preset, `analyze_music_cues.py` on any track (needs Python; run via `uv`), or `npx hyperframes beats` (no Python; needs Hyperframes ≥ 0.6.99). The rich sources (preset / `analyze_music_cues.py`) give two arrays; `hyperframes beats` gives one.
 
 - **`strongCues`** — high-intensity beats (drops, swells, accents). Use for **major moments**: scene transitions, hero reveals, match payoff, logo landing. Lock 1–3 per video. With `hyperframes beats` (no `strongCues`), take the highest-`strength` beats instead.
 - **`beats`** — the full beat grid. Use to **snap small sequential events** into the music's pulse: cards arriving one by one, stats popping in, sequenced SFX hits.
@@ -185,11 +185,11 @@ If SFX are enabled, also pass `<skill-dir>/assets/sfx/sfx-analysis.md` as select
 
 After `<output-dir>/brag-plan.md`, `<output-dir>/composition-brief.md`, and selected audio assets exist:
 
-1. Load the Hyperframes domain skills (`hyperframes-core`, `hyperframes-animation`, `hyperframes-creative`, `hyperframes-keyframes`, `hyperframes-cli`) to create or update `<output-dir>/composition/`. /brag is its own workflow — do not enter the `hyperframes` entry-point intent interview or route into its generic promo / launch-video workflow.
+1. Load the Hyperframes domain skills to create or update `<output-dir>/composition/`: `hyperframes-core`, `hyperframes-animation`, and `hyperframes-creative`; `hyperframes-keyframes` and `hyperframes-cli` only under the conditions in the brief's Hyperframes Instructions. /brag is its own workflow: do not enter the `hyperframes` entry-point intent interview or route into its generic promo / launch-video workflow.
 2. Pass Hyperframes the composition brief, the brag plan, and the source files it should reference.
 3. Let Hyperframes choose the implementation details.
-4. Run Hyperframes check (the single gate before render).
-5. Render to `<output-dir>/brag.mp4`.
+4. Run the check gate: `node <skill-dir>/scripts/brag.mjs check <output-dir>/composition`.
+5. Render: `node <skill-dir>/scripts/brag.mjs render <output-dir>/composition --output <output-dir>/brag.mp4`.
 6. Keep creation and rendering local. Remote or publishing workflows require a separate explicit user request.
 
 Do not manually copy stale composition snippets from this skill into the output. The point of delegating is to benefit from the latest Hyperframes guidance.

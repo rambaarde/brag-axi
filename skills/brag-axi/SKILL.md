@@ -1,9 +1,9 @@
 ---
 name: brag-axi
-description: Turn the current project website into a short, polished, shareable launch video using Hyperframes. Use when someone says "/brag", "let's brag about this", "make a launch video", "turn this into a video", or wants to share what they built. Reads the project code directly — no live URL or screenshots needed.
+description: Turn the current project website into a short, polished, shareable launch video using Hyperframes, loading only the instructions each run needs (token-efficient AXI fork of /brag). Use when someone says "/brag-axi", "/brag", "let's brag about this", "make a launch video", "turn this into a video", or wants to share what they built. Reads the project code directly — no live URL or screenshots needed.
 ---
 
-# /brag
+# /brag-axi
 
 You built it. Now let's brag about it.
 
@@ -103,7 +103,7 @@ Scan the project directory and extract the information needed to plan the brag v
 
 Write `<output-dir>/brag-plan.md` (where `<output-dir>` is `brag-output/` or the timestamped variant chosen above). Answer the planning rubric. Commit to a creative angle. Write the beat-by-beat storyboard including scenes, text, timing, transitions, and SFX cues.
 
-When music is selected, include a compact `Music cue guidance` section: read the bundled track's cue preset from `<skill-dir>/assets/music/cues/` if present, otherwise note cues will be detected at composition time (any track now supports beat sync — see `references/audio.md`). Cue metadata is optional timing guidance only: story, readability, pacing, and product clarity stay primary.
+When music is selected, include a compact `Music cue guidance` section: read the bundled track's cue preset summary (`.music-cues.md`, not the `.json`) from `<skill-dir>/assets/music/cues/` if present, otherwise note cues will be detected at composition time (any track now supports beat sync — see `references/audio-music.md`). Cue metadata is optional timing guidance only: story, readability, pacing, and product clarity stay primary.
 
 **Gate:** `<output-dir>/brag-plan.md` exists with a full storyboard. Scene durations sum to 15–25 seconds.
 
@@ -111,15 +111,15 @@ When music is selected, include a compact `Music cue guidance` section: read the
 
 ## Step 3: Hand off to Hyperframes
 
-**Read:** The Hyperframes domain skills — `hyperframes-core`, `hyperframes-animation`, `hyperframes-creative`, `hyperframes-keyframes`, `hyperframes-cli`. /brag is its own workflow: do not enter the `hyperframes` entry-point intent interview or route into its generic promo / launch-video workflow.
+**Read:** The Hyperframes domain skills `hyperframes-core`, `hyperframes-animation`, and `hyperframes-creative`. Load `hyperframes-keyframes` and `hyperframes-cli` only under the conditions in [references/step-3-compose.md](references/step-3-compose.md) (camera moves and keyframe work; `--voice`, `hyperframes beats`, or an unexplained failure). /brag is its own workflow: do not enter the `hyperframes` entry-point intent interview or route into its generic promo / launch-video workflow.
 **Read:** [references/step-3-compose.md](references/step-3-compose.md)
-**Read:** [references/audio.md](references/audio.md)
+**Read, only for the audio layers that are on:** [references/audio.md](references/audio.md) (shared), [references/audio-music.md](references/audio-music.md), [references/audio-sfx.md](references/audio-sfx.md). Skip all three with `--no-music` and `--no-sfx`.
 
 Write the composition brief and use Hyperframes to create the video implementation in `<output-dir>/composition/`.
 
 `/brag` owns the product angle, source material, storyboard, tone, format, audio selection, music cue guidance, and delivery expectations. Hyperframes owns the concrete composition structure, exact animation timing, animation mechanics, runtime choices, linting rules, and render workflow.
 
-**Gate:** `npx hyperframes check` passes with zero errors inside `<output-dir>/composition/` (the single browser gate before render — see hyperframes-cli for what it audits).
+**Gate:** `node <skill-dir>/scripts/brag.mjs check <output-dir>/composition` prints `check: pass` (the single browser gate before render). The script prints only blocking errors with fix hints and keeps the full report in `<output-dir>/.brag-logs/`.
 
 ---
 
@@ -137,7 +137,7 @@ Validate, preview, render to `<output-dir>/brag.mp4`, pick the best poster frame
 
 Seven tone presets ship with `/brag`. Each changes scripting energy, pacing, typography personality, and transition style. Presets are defaults, not limits.
 
-Full definitions: [references/tones.md](references/tones.md)
+Definitions: `references/tones/<tone>.md`, one file per preset. Read only the chosen preset; for a freeform direction, read the nearest preset.
 
 | Tone | Energy | One-liner |
 |---|---|---|
@@ -150,6 +150,12 @@ Full definitions: [references/tones.md](references/tones.md)
 | `app-store` | Smooth, feature-card clean | Corporate but not boring |
 
 Always allow a freeform creative direction to refine or override the preset.
+
+---
+
+## Script output
+
+`<skill-dir>/scripts/brag.mjs` follows AXI: short TOON on stdout, full logs on disk, exit `0` when the command ran (read `check:` / `render:`), `1` when it could not finish, `2` for a usage error. Run it with no arguments to see each `brag-output*` run and what is missing. Use it instead of calling `npx hyperframes check` or `render` directly; their raw output costs 1-4k tokens per call.
 
 ---
 

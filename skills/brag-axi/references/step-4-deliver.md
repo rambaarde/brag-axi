@@ -3,21 +3,22 @@
 ## Validate
 
 ```bash
-cd <output-dir>/composition
-npx hyperframes check   # brag's single pre-render gate — fix every error it reports
+node <skill-dir>/scripts/brag.mjs check <output-dir>/composition   # brag's single pre-render gate
 ```
 
-Fix all errors. `check` is brag's single pre-render gate — run it and fix everything it reports, including WCAG contrast failures (they gate as errors, not warnings). Each contrast finding carries a suggested compliant color, so apply it or adjust within the palette family and re-run `check` — most fixes need no screenshot. There is no per-element contrast escape hatch for real text; the only bypass is `check --no-contrast`, which skips the entire WCAG pass (all-or-nothing), not a way to accept one borderline element. For exact contrast thresholds, layout escape hatches, and reporting details, follow the current hyperframes-cli `check` guidance. `check`'s layout pass backstops the "keep all text readable" creative law — fix any reported overflow.
+The script runs `hyperframes check --json`, keeps the full report in `<output-dir>/.brag-logs/check.log`, and prints `check: pass` or `check: fail` with only the blocking errors and their fix hints (add `--all` for warnings and info). Fix every error, including WCAG contrast failures (they gate as errors, not warnings). Each contrast finding carries a suggested compliant color, so apply it or adjust within the palette family and re-run the check. Most fixes need no screenshot. There is no per-element contrast escape hatch for real text; the only bypass is `-- --no-contrast`, which skips the entire WCAG pass (all-or-nothing), not a way to accept one borderline element. The layout pass backstops the "keep all text readable" creative law, so fix any reported overflow. Load `hyperframes-cli` only if the script output does not explain an error.
 
 For a visual gut-check before rendering, optionally capture key frames:
 
 ```bash
+cd <output-dir>/composition
 npx hyperframes snapshot   # PNG key frames
 ```
 
 ## Preview
 
 ```bash
+cd <output-dir>/composition
 npx hyperframes preview
 ```
 
@@ -28,20 +29,12 @@ If the user approves or asks to render:
 ## Render
 
 ```bash
-npx hyperframes render --output ../brag.mp4
+node <skill-dir>/scripts/brag.mjs render <output-dir>/composition --output <output-dir>/brag.mp4
 ```
 
-This outputs to `<output-dir>/brag.mp4` (one level up from the composition directory).
+The script runs `hyperframes render --quiet`, keeps the full log in `<output-dir>/.brag-logs/render.log`, and prints `render: ok` with the path, duration, resolution, audio flag, and size. On failure it prints `render: fail` and the last log lines.
 
-For a faster iteration render:
-```bash
-npx hyperframes render --quality draft --output ../brag.mp4
-```
-
-For final delivery:
-```bash
-npx hyperframes render --quality high --output ../brag.mp4
-```
+For a faster iteration render, add `--quality draft`. For final delivery, add `--quality high`.
 
 ## Pick the poster frame
 
@@ -51,7 +44,7 @@ You built this composition, so you already know its strongest moment and exactly
 
 ```bash
 # use the timestamp of your strongest settled beat, e.g. 3.2s
-ffmpeg -ss 3.2 -i ../brag.mp4 -frames:v 1 -q:v 2 ../brag.jpg
+ffmpeg -ss 3.2 -i <output-dir>/brag.mp4 -frames:v 1 -q:v 2 <output-dir>/brag.jpg
 ```
 
 Aim for a frame that's postable on its own (the "show the thing" law — any frozen frame should be shareable). If the pulled frame lands on a transition or mid-animation, nudge the timestamp a few tenths of a second and re-extract.
