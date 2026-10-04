@@ -1,164 +1,127 @@
-# /brag
+# /brag-axi
 
-**You built it. Now brag.**
+**You built it. Now brag, and spend fewer tokens doing it.**
 
-> **Want a video without running `/brag` yourself?** Paste your site's link at [letsbrag.app](https://letsbrag.app).
+`/brag-axi` is a token-efficient fork of [latent-spaces/brag](https://github.com/latent-spaces/brag): an agent skill that turns
+your project into a short, shareable launch video with music, motion, and share copy, powered by
+[Hyperframes](https://hyperframes.heygen.com/). Same creative workflow and the same videos. The difference is that
+the agent loads only the instructions each run needs, and the HyperFrames CLI talks back in a few lines instead of thousands.
 
-[![the /brag launch site — you built it, now brag](docs/assets/hero.png)](https://latent-spaces.github.io/brag/)
+[![the /brag launch site](docs/assets/hero.png)](https://latent-spaces.github.io/brag/)
+<sub>Hero and example videos from the upstream project.</sub>
 
-`/brag` is an agent skill that turns the project you created into a short, shareable launch video — music, motion, and share copy included. One command, powered by [Hyperframes](https://hyperframes.heygen.com/).
+## What it saves
 
-The looping video on the [launch site](https://latent-spaces.github.io/brag/) was made by `/brag` on this very repo. 
+Measured with [`bench/context_cost.mjs`](bench/context_cost.mjs) against `upstream/main` (estimated tokens = bytes / 4).
 
-## Rather not run it yourself? Use letsbrag.app
+**Instructions the agent loads per run**
 
-[letsbrag.app](https://letsbrag.app) runs `/brag` for you. Paste your site's link and get a 20-second launch video with music, motion, and share copy. No setup, no subscription.
+| Scenario | /brag | /brag-axi | Saved |
+|---|---:|---:|---:|
+| Default (music + SFX, preset tone) | 37,129 | 26,738 | **28%** |
+| Silent (`--no-music --no-sfx`) | 35,052 | 19,985 | **43%** |
+| Camera moves (keyframes skill needed) | 37,129 | 30,774 | 17% |
+| `--voice` (CLI skill needed) | 37,129 | 32,293 | 13% |
 
-The skill stays free and open source. Install it below and run it yourself anytime.
+**Command output the agent reads per call** (sample HyperFrames composition)
 
-## New: `/brag-slim`
+| Command | Raw HyperFrames | `brag.mjs` | Saved |
+|---|---:|---:|---:|
+| `check` | 1,278 | 527 | **59%** |
+| `render --quality draft` | 3,810 | 66 | **98%** |
 
-**The same /brag, rebuilt lean for Opus 5.5.**
+A run usually checks more than once. With 3 checks and 2 renders, a default run goes from about **48.6k to 28.5k tokens (−41%)**
+before the agent writes any composition code. That total is an estimate from the measured parts, not a measured end-to-end run.
 
-A smooth launch video, designed for your specific project, with its own soundtrack and share copy.
-
-No Hyperframes, no bundled assets, same creative rules.
-
-Just tell Opus 5.5: *let's /brag about this.*
-
-On Opus 5.5, `/brag` switches to `/brag-slim` automatically. Run `/brag --full` to keep the classic Hyperframes workflow.
-
-**Install just `/brag-slim`:**
-
-```bash
-npx skills add https://github.com/latent-spaces/brag --skill brag-slim
-```
-
-Already have the Claude Code `/brag` plugin? `/brag-slim` is included from version 0.4.0. Run `claude plugin update brag` to get it.
-
-## Install /brag
-
-**Codex:**
+Reproduce:
 
 ```bash
-codex plugin marketplace add latent-spaces/brag
-codex plugin add brag@brag
+git remote add upstream https://github.com/latent-spaces/brag.git && git fetch upstream
+node bench/context_cost.mjs                       # instruction cost
+node bench/context_cost.mjs --runtime <comp-dir>  # also check/render output, raw vs brag.mjs
 ```
 
-To update it later:
+## How it saves
 
-```bash
-codex plugin marketplace upgrade brag
-codex plugin add brag@brag
-```
+The fork applies the [AXI](https://github.com/kunchenguid/axi) principles for agent-facing tools:
 
-**Claude Code:**
-
-```bash
-/plugin marketplace add latent-spaces/brag
-/plugin install brag@brag
-```
-
-Then run `/brag` inside any project. The plugin includes `/brag-slim` too.
-
-**Any other agent** — one command via the [`skills`](https://github.com/vercel-labs/skills) CLI (Cursor, Codex, Copilot, Gemini CLI, opencode, and more):
-
-```bash
-npx skills add https://github.com/latent-spaces/brag --skill brag
-```
-
-Add `-g` to install globally (available in every project); drop it to scope to the current one. ([browse on skills.sh](https://www.skills.sh/latent-spaces/brag/brag))
-
-<details>
-<summary>No installer? Copy the skill directly.</summary>
-
-```bash
-rsync -a --exclude '.DS_Store' skills/brag/ ~/.claude/skills/brag/
-rsync -a --exclude '.DS_Store' skills/brag-slim/ ~/.claude/skills/brag-slim/  # optional: the /brag-slim command
-```
-
-Restart Claude Code after copying.
-</details>
-
-### Also works with
-
-This repo exposes the skill at every agent's standard discovery path via symlinks. No extra config needed.
-
-| Agent | How it discovers |
+| Change | Effect |
 |---|---|
-| **Google Antigravity** | Auto-detects from `.agents/skills/brag/` at project root or `~/.gemini/config/skills/brag/` globally |
-| **opencode** | Auto-detects from `.opencode/skills/brag/` at project root |
-| **Codex CLI** | Reads `.agents/skills/brag/`, walking up to repo root |
-| **Claude Code** | Also reads `.claude/skills/brag/` (in addition to the `.claude-plugin/` marketplace install above) |
-| **Other agents** | Point custom instructions at `skills/brag/SKILL.md` — see [`docs/other-agents.md`](docs/other-agents.md) |
+| **`scripts/brag.mjs`** wraps `hyperframes check` and `render` | [TOON](https://toonformat.dev/) output; only blocking errors with fix hints (`--all` for the rest); `render` runs `--quiet` and reports path, duration, resolution, size; full logs stay in `<output-dir>/.brag-logs/` |
+| **Home view** | `node brag.mjs` with no arguments lists every `brag-output*` run and what is still missing |
+| **Structured errors** | `error:` + `help:` on stdout, unknown flags rejected, exit codes `0` ran / `1` could not finish / `2` usage |
+| **Load Hyperframes skills per need** | `core`, `animation`, `creative` always; `keyframes` only for camera moves and keyframe work; `cli` only for `--voice`, `hyperframes beats`, or an unexplained failure |
+| **One file per tone** | Reads `references/tones/<tone>.md` for the chosen preset, not all seven |
+| **Audio by layer** | `audio.md` (shared paths) + `audio-music.md` + `audio-sfx.md`, each read only when that layer is on |
+| **Data stays on disk** | Cue and SFX analysis JSON (up to ~100k tokens) is passed by path, never read (as upstream already did) |
 
-> **Windows users:** Git requires `git config core.symlinks true` (or `git clone -c core.symlinks=true`) and Windows Developer Mode or Administrator privileges to create symlinks. If symlinks don't work on your system, copy `skills/brag/` to the agent's skill directory manually instead.
+`/brag-slim`, the single-file Opus 5.5 variant (~1.9k tokens), ships unchanged.
+
+## Install
+
+**Any agent** (Codex, Claude Code, Antigravity, Cursor, opencode, Copilot, and others) through the [skills CLI](https://github.com/vercel-labs/skills):
+
+```bash
+npx skills add rambaarde/brag-axi --skill brag-axi
+```
+
+Add `-g` for all projects. Add `--skill brag-slim` as well if you also want the slim variant.
+
+**Claude Code plugin:**
+
+```text
+/plugin marketplace add rambaarde/brag-axi
+/plugin install brag-axi@brag-axi
+```
+
+**Codex plugin:**
+
+```bash
+codex plugin marketplace add rambaarde/brag-axi
+codex plugin add brag-axi@brag-axi
+```
+
+The repo also exposes the skills at `.agents/skills/`, `.claude/skills/`, and `.opencode/skills/` via symlinks
+(Windows: `git clone -c core.symlinks=true`). If you also have upstream `/brag` installed, keep only one of the two,
+because both answer "let's brag about this".
 
 ## Use it
 
-From any project directory, ask your agent:
+From any project directory:
 
 ```text
-let's /brag
+let's /brag-axi
+/brag-axi --tone chaotic --format vertical
+/brag-axi --no-music --no-sfx
+/brag-axi --voice
 ```
 
-Or steer the tone:
-
-```text
-/brag --tone "fake Series A launch from 2016"
-```
-
-Voiceover is off by default. Enable it explicitly with:
-
-```text
-/brag --voice
-```
-
-Narration uses Kokoro through Hyperframes when enabled.
-
-You get a `brag-output/` folder with the plan, a composition brief, share copy, and the rendered `brag.mp4`.
-
-## How it works
-
-`/brag` owns the story — the product angle, tone, and which moments to show. It hands a focused brief to [Hyperframes](https://hyperframes.heygen.com/), which builds, times, and renders the video.
+Options, tones, and output (`brag-output/` with the plan, composition brief, share copy, `brag.mp4`, and `brag.jpg`)
+are the same as upstream. On Claude Opus 5.5, `/brag-axi` hands off to `/brag-slim` unless you pass `--full` or `--voice`.
 
 ## Requirements
 
-- An agent that supports Agent Skills — Claude Code, opencode, Codex CLI, or any agent with custom instructions (see "Also works with" above)
+- An agent that supports Agent Skills
 - Node.js 22+
-- FFmpeg on `PATH`
-- Hyperframes CLI — `npx hyperframes` (check it with `npx hyperframes doctor`)
+- FFmpeg (with `ffprobe`) on `PATH`
+- Hyperframes CLI: `npx hyperframes` (check with `npx hyperframes doctor`)
 
-## What's in this repo
+## Staying in sync with upstream
 
-- `skills/brag/` — the skill, references, and bundled music + SFX
-- `skills/brag-slim/` — `/brag-slim`, the single-file skill for Claude Opus 5.5
-- `examples/` — fake product sites used as a benchmark suite
-- `docs/` — the launch site (GitHub Pages)
-- `plugin.json` — portable Agent Plugins manifest
-- `.codex-plugin/` — Codex compatibility manifest
-- `.claude-plugin/` — Claude Code manifest + shared marketplace catalog (also recognized by Codex)
-- `.claude/skills/brag/` — symlink → `skills/brag/` (Claude Code discovery)
-- `.agents/skills/brag/` — symlink → `skills/brag/` (Codex CLI + opencode discovery)
-- `.opencode/skills/brag/` — symlink → `skills/brag/` (opencode discovery)
+```bash
+git fetch upstream && git merge upstream/main
+```
+
+The skill folder is `skills/brag-axi/` (upstream: `skills/brag/`), so git follows the rename. Conflicts are most likely in
+`SKILL.md` and the step references, where the loading rules changed.
 
 ## Credits
 
-- Music — [ende.app](https://ende.app/en) "Happy Beats / Business Moves"
-- Sound effects — [Kenney](https://kenney.nl/)
-- Video generation — [Hyperframes](https://hyperframes.heygen.com/)
-- Fake demo sites — built with [Impeccable](https://impeccable.style/)
+- **[/brag](https://github.com/latent-spaces/brag)** by Latent Spaces (Shunit Haviv Hakimi): the original skill, creative rules, examples, and launch site. MIT.
+- Music: [ende.app](https://ende.app/en) "Happy Beats / Business Moves". Sound effects: [Kenney](https://kenney.nl/) (CC0).
+- Video generation: [Hyperframes](https://hyperframes.heygen.com/).
+- Principles: [AXI](https://github.com/kunchenguid/axi) and [TOON](https://toonformat.dev/).
 
-## Contributing
+## License
 
-Contributions, ideas, and new demo brags are welcome — open an issue or a PR.
-
-## Star History
-
-<a href="https://www.star-history.com/?type=date&repos=latent-spaces%2Fbrag">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=latent-spaces/brag&type=date&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=latent-spaces/brag&type=date&legend=top-left" />
-   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=latent-spaces/brag&type=date&legend=top-left" />
- </picture>
-</a>
+MIT, same as upstream. See [LICENSE](LICENSE).
