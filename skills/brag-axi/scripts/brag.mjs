@@ -109,16 +109,31 @@ function logTail(log, n = 12) {
 
 // --- check ------------------------------------------------------------------
 const SECTIONS = ["lint", "runtime", "layout", "motion", "contrast"];
+function shortSelector(sel) {
+  // Long generated selectors ("div:nth-of-type(1) > div > ...") cost tokens; the tail locates the element.
+  if (!sel || sel.length <= 60) return sel;
+  return "… > " + sel.split(" > ").slice(-2).join(" > ");
+}
 function issueRow(section, f) {
   const at = f.firstSeen != null && f.lastSeen != null && f.firstSeen !== f.lastSeen
     ? `${+f.firstSeen.toFixed(2)}-${+f.lastSeen.toFixed(2)}s` : f.time != null ? `${+Number(f.time).toFixed(2)}s` : "";
   let fix = f.fixHint || f.fix || "";
   if (!fix && f.suggestedColor) fix = `use ${f.suggestedColor} (contrast ${f.ratio}:1, needs ${f.requiredRatio}:1)`;
-  const where = [f.selector, f.sourceFile && `(${f.sourceFile}${f.line ? ":" + f.line : ""})`].filter(Boolean).join(" ");
+  const where = [shortSelector(f.selector), f.sourceFile && `(${f.sourceFile}${f.line ? ":" + f.line : ""})`].filter(Boolean).join(" ");
   return {
-    severity: f.severity || "error", section, where, at,
+    severity: f.severity || "error", section, code: f.code || "", where, at,
     problem: [f.code, f.message].filter(Boolean).join(": ") + (f.text ? ` "${f.text}"` : ""), fix,
   };
+}
+function grouped(rows) {
+  // Collapse repeats of the same problem in the same place into one row with a count (used by --all).
+  const by = new Map();
+  for (const r of rows) {
+    const key = [r.severity, r.section, r.code, r.where, r.fix].join("\u0000");
+    const g = by.get(key);
+    if (g) { g.count++; if (g.ats.length < 3) g.ats.push(r.at); } else by.set(key, { ...r, count: 1, ats: [r.at] });
+  }
+  return [...by.values()].map((g) => ({ ...g, at: g.ats.join(" ") + (g.count > g.ats.length ? " …" : "") }));
 }
 function check(argv) {
   const args = parse(argv, "check", { all: "bool" });
@@ -134,30 +149,32 @@ function check(argv) {
         "If the cause is unclear, load the hyperframes-cli skill"]));
     process.exit(1);
   }
-  const sections = SECTIONS.filter((s) => report[s]).map((s) => ({
-    section: s, errors: report[s].errorCount ?? 0, warnings: report[s].warningCount ?? 0,
-  }));
+  const sections = SECTIONS.filter((s) => report[s] && (report[s].errorCount || report[s].warningCount))
+    .map((s) => ({ section: s, errors: report[s].errorCount ?? 0, warnings: report[s].warningCount ?? 0 }));
   const rank = { error: 0, warning: 1 };
   const issues = SECTIONS.flatMap((s) => (report[s]?.findings || []).map((f) => issueRow(s, f)))
     .sort((a, b) => (rank[a.severity] ?? 2) - (rank[b.severity] ?? 2));
   const errors = issues.filter((i) => i.severity === "error");
-  const warnings = issues.filter((i) => i.severity === "warning").length;
-  const other = issues.length - errors.length - warnings;
-  // Default schema: only the errors that block the gate. Warnings and info are opt-in (--all).
-  const shown = args.all ? issues : errors.slice(0, MAX_ISSUES);
+  const rest = issues.filter((i) => i.severity !== "error");
+  // Default schema: only the errors that block the gate, plus a by-code count of the rest (AXI aggregates),
+  // so the agent does not need --all just to learn what the non-blocking issues are.
+  const byCode = Object.entries(rest.reduce((m, i) => ((m[i.code || i.section] = (m[i.code || i.section] || 0) + 1), m), {}))
+    .sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k} ${n}`).join(", ");
+  const shown = args.all ? grouped(issues) : errors.slice(0, MAX_ISSUES);
   const verdict = report.ok ? "pass" : "fail";
   const hints = [];
   if (verdict === "fail") hints.push(`Fix every error, then run \`${RUN} check ${args._[0]}\` again`);
-  if (shown.length < issues.length) {
-    hints.push(`\`${RUN} check ${args._[0]} --all\` lists all ${issues.length} (${issues.length - errors.length} do not block render)`);
-  }
+  if (!args.all && errors.length > MAX_ISSUES) hints.push(`${errors.length - MAX_ISSUES} more errors: \`${RUN} check ${args._[0]} --all\``);
   if (verdict === "pass") hints.push(`Render: \`${RUN} render ${args._[0]} --output <output-dir>/brag.mp4\``);
   if (issues.length) hints.push(`Full report: ${r.logPath}`);
-  emit(field("check", verdict), field("composition", dir), table("sections", ["section", "errors", "warnings"], sections),
+  emit(field("check", verdict), field("composition", dir),
+    sections.length ? table("sections", ["section", "errors", "warnings"], sections) : "",
     issues.length
-      ? field("issues", `${issues.length} (${errors.length} errors, ${warnings} warnings, ${other} info; ${shown.length} shown)`)
+      ? field("issues", `${issues.length} (${errors.length} blocking errors; ${shown.length} rows shown)`)
       : field("issues", "0 found in lint, runtime, layout, motion, and contrast"),
-    shown.length ? table("issues", ["severity", "section", "where", "at", "problem", "fix"], shown) : "",
+    rest.length && !args.all ? field("non_blocking", `${rest.length}, do not block render (${byCode}); --all lists them grouped`) : "",
+    shown.length ? table("issues", args.all ? ["severity", "section", "where", "at", "count", "problem", "fix"]
+      : ["severity", "section", "where", "at", "problem", "fix"], shown) : "",
     help(hints));
 }
 
