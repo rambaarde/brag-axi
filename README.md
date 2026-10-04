@@ -12,6 +12,30 @@ the agent loads only the instructions each run needs, and the HyperFrames CLI ta
 
 ## What it saves
 
+### Real run, head to head (2026-10-04)
+
+Same model (Claude Code, Opus 5), same prompt (`--full`, non-interactive, draft render), same site
+(upstream `examples/horse-tinder`), same five Hyperframes skills installed, both runs at the same time:
+
+| | `/brag --full` | `/brag-axi --full` | Δ |
+|---|---:|---:|---:|
+| Cost (Claude Code `total_cost_usd`) | $9.71 | $8.03 | **−17%** |
+| Input tokens (incl. cache reads) | 10.66M | 7.74M | **−27%** |
+| Output tokens | 84.6k | 83.1k | ~same |
+| Turns | 76 | 68 | −8 |
+| Hyperframes skills loaded | core, animation, cli | core, creative | `cli` skipped |
+| Deliverables | all, 23.7 s 1080p + audio | all, 22.7 s 1080p + audio | both pass `check` |
+
+One pair of runs, so treat the size of the gain as indicative: agent runs vary in turn count. What the logs show:
+the saving comes from a smaller context carried on every turn (fewer Hyperframes skills, smaller tool output), not
+from the split reference files. Neither agent opened a reference file in this run.
+
+Lesson applied after the run: in that A/B, one `brag.mjs check --all` call cost 2,152 tokens because the output
+invited it. The default output now includes a per-code count of non-blocking issues, and `--all` groups duplicates.
+This fix is not yet measured in a full run.
+
+### Component measurements
+
 Measured with [`bench/context_cost.mjs`](bench/context_cost.mjs) against `upstream/main` (estimated tokens = bytes / 4).
 
 **Instructions the agent loads per run**
@@ -27,11 +51,11 @@ Measured with [`bench/context_cost.mjs`](bench/context_cost.mjs) against `upstre
 
 | Command | Raw HyperFrames | `brag.mjs` | Saved |
 |---|---:|---:|---:|
-| `check` | 1,278 | 527 | **59%** |
+| `check` | 1,278 | 496 | **61%** |
 | `render --quality draft` | 3,810 | 66 | **98%** |
 
-A run usually checks more than once. With 3 checks and 2 renders, a default run goes from about **48.6k to 28.5k tokens (−41%)**
-before the agent writes any composition code. That total is an estimate from the measured parts, not a measured end-to-end run.
+Upper bound if an agent reads every instruction file the routing sends it to: with 3 checks and 2 renders, a default
+run goes from about **48.6k to 28.4k tokens (−41%)** before any composition code. Real agents read fewer files (see above).
 
 Reproduce:
 
@@ -41,9 +65,9 @@ node bench/context_cost.mjs                       # instruction cost
 node bench/context_cost.mjs --runtime <comp-dir>  # also check/render output, raw vs brag.mjs
 ```
 
-### End-to-end test (2026-10-04)
+### Earlier end-to-end test: Codex (2026-10-04)
 
-Codex CLI 0.155.1 (`gpt-5.6-luna`, high reasoning) ran `/brag-axi` headless on the upstream `examples/horse-tinder` site:
+Codex CLI 0.155.1 (`gpt-5.6-luna`, high reasoning) ran `/brag-axi` headless on the same site:
 
 | Result | |
 |---|---|
@@ -52,8 +76,7 @@ Codex CLI 0.155.1 (`gpt-5.6-luna`, high reasoning) ran `/brag-axi` headless on t
 | Gate and render | 6 `brag.mjs check` calls and 1 `brag.mjs render`; final check `pass`; **0 raw `npx hyperframes` calls** |
 | Time and tokens | ~11 minutes, 191,326 tokens total (Codex count, including reading the project and writing the composition) |
 
-Limit of this test: the agent worked from `SKILL.md` alone and read no reference file and no Hyperframes skill, so it
-did not exercise the per-step loading rules. There is no matching upstream run yet, so the end-to-end saving is not measured.
+As in the Claude run, the agent worked from `SKILL.md` and read no reference file.
 
 ## How it saves
 
