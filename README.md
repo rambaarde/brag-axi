@@ -41,6 +41,20 @@ node bench/context_cost.mjs                       # instruction cost
 node bench/context_cost.mjs --runtime <comp-dir>  # also check/render output, raw vs brag.mjs
 ```
 
+### End-to-end test (2026-10-04)
+
+Codex CLI 0.155.1 (`gpt-5.6-luna`, high reasoning) ran `/brag-axi` headless on the upstream `examples/horse-tinder` site:
+
+| Result | |
+|---|---|
+| Deliverables | plan, composition brief, composition, `brag.mp4`, `brag.jpg`, `share-copy.txt`: all written |
+| Video | 20.0 s, 1920x1080, with music and SFX; poster baked as frame 0 |
+| Gate and render | 6 `brag.mjs check` calls and 1 `brag.mjs render`; final check `pass`; **0 raw `npx hyperframes` calls** |
+| Time and tokens | ~11 minutes, 191,326 tokens total (Codex count, including reading the project and writing the composition) |
+
+Limit of this test: the agent worked from `SKILL.md` alone and read no reference file and no Hyperframes skill, so it
+did not exercise the per-step loading rules. There is no matching upstream run yet, so the end-to-end saving is not measured.
+
 ## How it saves
 
 The fork applies the [AXI](https://github.com/kunchenguid/axi) principles for agent-facing tools:
