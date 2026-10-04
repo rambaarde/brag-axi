@@ -1,15 +1,19 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
-  "name": "brag",
-  "version": "0.4.0",
-  "description": "Turn the current project into a short, polished, shareable launch video using Hyperframes.",
+  "name": "brag-axi",
+  "version": "0.4.0-axi.1",
+  "description": "Token-efficient fork of /brag (AXI): turn the current project into a short, polished launch video with HyperFrames, loading only the instructions each run needs.",
   "author": {
-    "name": "Shunit Haviv Hakimi",
-    "email": "shunithaviv@gmail.com",
-    "url": "https://github.com/shunithaviv"
+    "name": "rambaarde",
+    "url": "https://github.com/rambaarde"
   },
-  "homepage": "https://latent-spaces.github.io/brag/",
-  "repository": "https://github.com/latent-spaces/brag",
+  "homepage": "https://github.com/rambaarde/brag-axi",
+  "repository": "https://github.com/rambaarde/brag-axi",
   "license": "MIT",
-  "keywords": ["video", "launch", "hyperframes", "skill"]
+  "keywords": [
+    "video",
+    "launch",
+    "hyperframes",
+    "skill"
+  ]
 }

@@ -1,13 +1,18 @@
 {
-  "name": "brag",
-  "description": "Turn the current project into a short, polished, shareable launch video using HyperFrames.",
-  "version": "0.4.0",
+  "name": "brag-axi",
+  "description": "Token-efficient fork of /brag (AXI): turn the current project into a short, polished launch video with HyperFrames, loading only the instructions each run needs.",
+  "version": "0.4.0-axi.1",
   "author": {
-    "name": "Shunit Haviv Hakimi",
-    "email": "shunithaviv@gmail.com"
+    "name": "rambaarde",
+    "url": "https://github.com/rambaarde"
   },
   "license": "MIT",
-  "homepage": "https://github.com/latent-spaces/brag",
-  "repository": "https://github.com/latent-spaces/brag",
-  "keywords": ["video", "launch", "hyperframes", "skill"]
+  "homepage": "https://github.com/rambaarde/brag-axi",
+  "repository": "https://github.com/rambaarde/brag-axi",
+  "keywords": [
+    "video",
+    "launch",
+    "hyperframes",
+    "skill"
+  ]
 }

@@ -1,25 +1,33 @@
 {
-  "name": "brag",
-  "version": "0.4.0",
-  "description": "Turn the current project into a short, polished, shareable launch video using Hyperframes.",
+  "name": "brag-axi",
+  "version": "0.4.0-axi.1",
+  "description": "Token-efficient fork of /brag (AXI): turn the current project into a short, polished launch video with HyperFrames, loading only the instructions each run needs.",
   "author": {
-    "name": "Shunit Haviv Hakimi",
-    "email": "shunithaviv@gmail.com",
-    "url": "https://github.com/shunithaviv"
+    "name": "rambaarde",
+    "url": "https://github.com/rambaarde"
   },
-  "homepage": "https://latent-spaces.github.io/brag/",
-  "repository": "https://github.com/latent-spaces/brag",
+  "homepage": "https://github.com/rambaarde/brag-axi",
+  "repository": "https://github.com/rambaarde/brag-axi",
   "license": "MIT",
-  "keywords": ["video", "launch", "hyperframes", "skill"],
+  "keywords": [
+    "video",
+    "launch",
+    "hyperframes",
+    "skill"
+  ],
   "skills": "./skills/",
   "interface": {
-    "displayName": "brag",
+    "displayName": "brag-axi",
     "shortDescription": "Turn your project into a polished launch video.",
     "longDescription": "Create a short, shareable launch video from the current project, complete with a tailored story, motion, music, sound effects, poster frame, and share copy.",
-    "developerName": "Latent Spaces",
+    "developerName": "rambaarde (fork of Latent Spaces /brag)",
     "category": "Productivity",
-    "capabilities": ["Read", "Write", "Execute"],
-    "websiteURL": "https://latent-spaces.github.io/brag/",
+    "capabilities": [
+      "Read",
+      "Write",
+      "Execute"
+    ],
+    "websiteURL": "https://github.com/rambaarde/brag-axi",
     "defaultPrompt": [
       "Turn this project into a launch video.",
       "Let's brag about what I built.",

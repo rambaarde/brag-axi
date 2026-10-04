@@ -4,29 +4,29 @@ Agents like **Cursor**, **Aider**, or any LLM with custom instructions don't hav
 
 ## Option 1: Paste into custom instructions
 
-Open your agent's custom instructions or system prompt settings and paste the full contents of [`skills/brag/SKILL.md`](../skills/brag/SKILL.md).
+Open your agent's custom instructions or system prompt settings and paste the full contents of [`skills/brag-axi/SKILL.md`](../skills/brag-axi/SKILL.md).
 
 ## Option 2: Reference as a file path
 
 If your agent supports loading instructions from a file, point it at:
 
 ```
-path/to/skills/brag/SKILL.md
+path/to/skills/brag-axi/SKILL.md
 ```
 
 ## Option 3: Copy the skill folder
 
-Copy `skills/brag/` into wherever your agent looks for skill files:
+Copy `skills/brag-axi/` into wherever your agent looks for skill files:
 
 ```bash
-cp -r skills/brag/ ~/.your-agent/skills/brag/
+cp -r skills/brag-axi/ ~/.your-agent/skills/brag-axi/
 ```
 
 ## Google Antigravity (AGY)
 
 Antigravity natively discovers skills without manual pasting:
-- **Project-level**: Symlink or copy `skills/brag/` to `.agents/skills/brag/` (or declare in `.agents/skills.json`).
-- **Global-level**: Copy `skills/brag/` to `~/.gemini/config/skills/brag/` to make `/brag` accessible across all your projects.
+- **Project-level**: Symlink or copy `skills/brag-axi/` to `.agents/skills/brag-axi/` (or declare in `.agents/skills.json`).
+- **Global-level**: Copy `skills/brag-axi/` to `~/.gemini/config/skills/brag-axi/` to make `/brag-axi` accessible across all your projects.
 - **Hyperframes companion skills**: Run `npx hyperframes skills` to ensure Hyperframes helper skills are installed to `~/.agents/skills` / `~/.gemini/config/skills`.
 
 ## Prerequisites
@@ -35,4 +35,4 @@ Regardless of method, the environment needs:
 - **Node.js 22+**
 - **FFmpeg** on `PATH`
 - **Hyperframes CLI** — `npx hyperframes doctor` to verify
-- **This repo cloned** (or `skills/brag/` accessible) for assets (music, SFX, reference docs)
+- **This repo cloned** (or `skills/brag-axi/` accessible) for assets (music, SFX, reference docs)
